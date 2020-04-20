@@ -1,0 +1,46 @@
+version: 2
+jobs:
+  build:
+    parallelism: 1
+    docker:
+      - image: circleci/python:3.7-stretch-browsers
+
+    working_directory: /home/circleci/project
+    steps:
+      - restore_cache:
+          keys:
+            - source-v1-{{ .Branch }}-{{ .Revision }}
+            - source-v1-{{ .Branch }}-
+            - source-v1-
+
+      - checkout
+
+      - save_cache:
+          key: source-v1-{{ .Branch }}-{{ .Revision }}
+          paths:
+            - ".git"
+
+      - run:
+          name: install dependencies
+          command: |
+            sudo apt-get install python-tk
+            sudo pip install simplejson requests
+            sudo pip install -U selenium==3.3
+            sudo pip install robotframework==3.0
+            sudo pip install -U robotframework-requests
+            sudo pip install robotframework-selenium2library
+            sudo pip install -U robotframework-pabot
+      - run:
+          name: run tests
+          shell: /bin/sh
+          command: |
+            sudo sh ./circle.sh
+          # no_output_timeout: 2h
+           
+      # collect reports
+      - store_test_results:
+          path: results/log.html
+
+      - store_artifacts:
+          path: results
+          destination: results
